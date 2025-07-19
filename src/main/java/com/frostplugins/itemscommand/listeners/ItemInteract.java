@@ -48,7 +48,7 @@ public class ItemInteract implements Listener {
                     .replace("{player}", player.getName());
 
             if (subItem != null) {
-                command = command.replace("{selected_sub_item}", subItem);
+                command = command.replace("{current_sub_item}", subItem);
             }
 
             if (attribute != null) {

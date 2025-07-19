@@ -6,7 +6,7 @@
 
 items:
   '1':
-    display-name: '&fPapel Vip &a({selected_sub_item} {attributes_integer}d&a)'
+    display-name: '&fPapel Vip &a({current_sub_item} {attributes_integer}d&a)'
     sub-items:
       - 'Frost:&b'
       - 'Plugins:&c'
@@ -14,7 +14,7 @@ items:
       - 'integer'
     description:
       - ''
-      - ' &fVip: &a{selected_sub_item}'
+      - ' &fVip: &a{current_sub_item}'
       - ' &fDuração: &a{attributes_integer} dias'
       - ''
       - ' &eClique para ativar o vip'
@@ -23,7 +23,7 @@ items:
     material: PAPER
     head: false
     head-url: ''
-    command: 'darvip {player} {selected_sub_item} {attributes_integer}d'
+    command: 'darvip {player} {current_sub_item} {attributes_integer}d'
   '2':
     display-name: '&fPapel Vip &c(Palhacin 30d)'
     description:

@@ -96,7 +96,7 @@ public class ItemsCommandObject {
             for (String line : itemObj.getDescription()) {
                 if (line != null) {
                     String replacedLine = line
-                            .replace("{selected_sub_item}", subItem != null ? formattedSubItem : "")
+                            .replace("{current_sub_item}", subItem != null ? formattedSubItem : "")
                             .replace("{attributes_integer}", attribute != null ? attribute : "");
                     replacedLore.add(replacedLine);
                 }
@@ -105,7 +105,7 @@ public class ItemsCommandObject {
 
         ItemBuilder builder = new ItemBuilder(baseItem)
                 .setName(itemObj.getDisplayName()
-                        .replace("{selected_sub_item}", subItem != null ? formattedSubItem : "")
+                        .replace("{current_sub_item}", subItem != null ? formattedSubItem : "")
                         .replace("{attributes_integer}", attribute != null ? attribute : ""))
                 .setAmount(1)
                 .setLore(replacedLore);
