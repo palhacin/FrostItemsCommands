@@ -14,18 +14,16 @@ items:
       - 'integer'
     description:
       - ''
-      - ' &fVip: &a{current_sub_items}'
+      - ' &fVip: &a{selected_sub_item}'
       - ' &fDuração: &a{attributes_integer} dias'
       - ''
       - ' &eClique para ativar o vip'
     message-when-use:
       - ''
-      - ''
-      - ''
     material: PAPER
     head: false
     head-url: ''
-    command: 'darvip {player} {current_sub_items} {attributes_duration}d'
+    command: 'darvip {player} {selected_sub_item} {attributes_duration}d'
   '2':
     display-name: '&fPapel Vip &c(Palhacin 30d)'
     description:
@@ -34,6 +32,8 @@ items:
       - ' &fDuração: &a30 dias'
       - ''
       - ' &eClique para ativar o vip'
+    message-when-use:
+      - ''
     material: PAPER
     head: true
     head-url: 'http://textures.minecraft.net/texture/4c9f0e43470c8e853141a971e6e732ef09964b8e4dbe313435e78f910c3049a2'
