@@ -21,11 +21,11 @@ public class ItemsCommandObject {
     private final String material;
     private final boolean isHead;
     private final String headUrl;
-    private final String command;
+    private final List<String> commands;
 
     public ItemsCommandObject(String key, String displayName, List<String> subItems, List<String> attributes,
                               List<String> description, List<String> messageWhenUse, String material, boolean isHead,
-                              String headUrl, String command) {
+                              String headUrl, List<String> commands) {
         this.key = key;
         this.displayName = displayName;
         this.subItems = subItems;
@@ -35,8 +35,9 @@ public class ItemsCommandObject {
         this.material = material;
         this.isHead = isHead;
         this.headUrl = headUrl;
-        this.command = command;
+        this.commands = commands;
     }
+
 
     public String getKey() {
         return key;
@@ -74,8 +75,8 @@ public class ItemsCommandObject {
         return headUrl;
     }
 
-    public String getCommand() {
-        return command;
+    public List<String> getCommands() {
+        return commands;
     }
 
     public static ItemStack createItem(ItemsCommandObject itemObj, String subItem, String attribute) {

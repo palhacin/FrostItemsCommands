@@ -12,6 +12,8 @@ import org.bukkit.event.block.Action;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.List;
+
 public class ItemInteract implements Listener {
 
     @EventHandler
@@ -44,18 +46,16 @@ public class ItemInteract implements Listener {
                 }
             }
 
-            String command = itemCommand.getCommand()
-                    .replace("{player}", player.getName());
+            for (String commands : itemCommand.getCommands()) {
+                if (subItem != null) {
+                    commands = commands.replace("{current_sub_item}", subItem);
+                }
 
-            if (subItem != null) {
-                command = command.replace("{current_sub_item}", subItem);
+                if (attribute != null) {
+                    commands = commands.replace("{attributes_integer}", String.valueOf(attribute));
+                }
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), commands.replace("{player}", player.getName()));
             }
-
-            if (attribute != null) {
-                command = command.replace("{attributes_integer}", String.valueOf(attribute));
-            }
-
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
 
             event.setCancelled(true);
 

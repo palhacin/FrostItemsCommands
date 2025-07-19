@@ -23,7 +23,8 @@ items:
     material: PAPER
     head: false
     head-url: ''
-    command: 'darvip {player} {current_sub_item} {attributes_integer}d'
+    commands:
+      - 'darvip {player} {current_sub_item} {attributes_integer}d'
   '2':
     display-name: '&fPapel Vip &c(Palhacin 30d)'
     description:
@@ -37,4 +38,5 @@ items:
     material: PAPER
     head: true
     head-url: 'http://textures.minecraft.net/texture/4c9f0e43470c8e853141a971e6e732ef09964b8e4dbe313435e78f910c3049a2'
-    command: 'darvip {player} palhacin 30d'
+    commands:
+      - 'darvip {player} palhacin 30d'

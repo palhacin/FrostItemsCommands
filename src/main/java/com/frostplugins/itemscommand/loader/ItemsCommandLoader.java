@@ -35,7 +35,7 @@ public class ItemsCommandLoader {
                 String material = config.getString(path + "material");
                 boolean isHead = config.getBoolean(path + "head");
                 String headUrl = config.getString(path + "head-url");
-                String command = config.getString(path + "command");
+                List<String> commands = config.getStringList(path + "commands");
 
                 ItemsCommandObject item = new ItemsCommandObject(
                         key,
@@ -47,7 +47,7 @@ public class ItemsCommandLoader {
                         material,
                         isHead,
                         headUrl,
-                        command
+                        commands
                 );
 
                 itemsList.add(item);
