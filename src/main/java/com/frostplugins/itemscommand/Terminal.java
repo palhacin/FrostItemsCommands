@@ -27,7 +27,8 @@ public final class Terminal extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
         instance=this;
-        setupConfig();
+        saveDefaultConfig();
+        itemsConfig = PluginUtil.loadConfig("items.yml", Terminal.getInstance());
 
         List<ItemsCommandObject> itemsList = ItemsCommandLoader.loadAll(itemsConfig.getConfig());
 
@@ -42,25 +43,6 @@ public final class Terminal extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-    }
-
-    private static void setupConfig(){
-        itemsConfig = new ConfigUtil(Terminal.getInstance(), "items.yml");
-
-        Terminal.getInstance().saveDefaultConfig();
-        itemsConfig.saveDefaultConfig();
-
-        createFile(Terminal.getInstance(), Terminal.getInstance().getDataFolder().getAbsolutePath(), false);
-    }
-
-    public static void createFile(Terminal main, String fileName, boolean isFile) {
-        try {
-            File file = new File(main.getDataFolder() + File.separator + fileName);
-            if (isFile) file.createNewFile();
-            else if (!file.exists()) file.mkdirs();
-        } catch (SecurityException | IOException e) {
-            e.printStackTrace();
-        }
     }
 
 }
