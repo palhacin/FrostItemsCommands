@@ -1,29 +1,35 @@
 package com.frostplugins.itemscommand.commands;
 
-import com.frostplugins.itemscommand.Terminal;
 import com.frostplugins.itemscommand.interfaces.Interface;
-import com.frostplugins.itemscommand.loader.ItemsCommandLoader;
 import com.frostplugins.itemscommand.objects.ItemsCommandObject;
+import com.frostplugins.itemscommand.services.ItemsCommandService;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 public class ItemsCommand extends Command {
 
-    private final Terminal instance;
+    private static FileConfiguration config;;
 
-    public ItemsCommand(Terminal instance) {
-        super(instance.getConfig().getString("command.name"));
-        setAliases(instance.getConfig().getStringList("command.aliases"));
-        setUsage(instance.getConfig().getString("command.usage").replace("&", "§"));
-        this.instance = instance;
+    public ItemsCommand(FileConfiguration config) {
+        super(config.getString("command.name"));
+        setAliases(config.getStringList("command.aliases"));
+        setUsage(config.getString("command.usage").replace("&", "§"));
+        setPermission(config.getString("command.permission"));
+        setPermissionMessage(config.getString("command.permission-message").replace("&", "§"));
+        ItemsCommand.config = config;
     }
-
 
     @Override
     public boolean execute(CommandSender sender, String label, String[] args) {
+        if (!sender.hasPermission(getPermission())) {
+            sender.sendMessage(getPermissionMessage());
+            return true;
+        }
+
         if (sender instanceof Player) {
             if (args.length == 0) {
                 ((Player) sender).openInventory(Interface.get(0));
@@ -38,113 +44,120 @@ public class ItemsCommand extends Command {
 
         String playerName = args[0];
         String itemKey = args[1];
-        ItemsCommandObject itemCommand = getItemByKey(itemKey);
+        ItemsCommandObject itemCommand = getItemCommand(itemKey, sender);
 
+        if (itemCommand == null) return true;
+
+        String subItem = getSubItem(args, itemCommand, sender);
+        if (subItem == null) return true;
+
+        String attributeStr = getIntegerAttribute(args, itemCommand, sender);
+        if (attributeStr == null) return true;
+
+        int amount = getItemAmount(args, sender);
+        if (amount == -1) return true;
+
+        return giveItemToPlayer(sender, playerName, itemCommand, subItem, attributeStr, amount);
+    }
+
+    private ItemsCommandObject getItemCommand(String itemKey, CommandSender sender) {
+        ItemsCommandObject itemCommand = ItemsCommandService.getItemCommandsByKey(itemKey);
         if (itemCommand == null) {
             sender.sendMessage("§cEste item não existe na config 'items.yml'");
-            return true;
         }
+        return itemCommand;
+    }
 
-        int argIndex = 2;
+    private String getSubItem(String[] args, ItemsCommandObject itemCommand, CommandSender sender) {
+        if (itemCommand.getSubItems() == null || itemCommand.getSubItems().isEmpty()) return null;
 
-        String subItem = null;
-        if (itemCommand.getSubItems() != null && !itemCommand.getSubItems().isEmpty()) {
-            if (args.length <= argIndex) {
-                sender.sendMessage(getUsage());
-                sender.sendMessage("");
-                sender.sendMessage("§cVocê precisa especificar o sub-item para este item");
-                sender.sendMessage("");
-                return true;
-            }
-
-            subItem = args[argIndex++];
-            if (!itemCommand.getSubItems().contains(subItem)) {
-                sender.sendMessage(getUsage());
-                sender.sendMessage("");
-                sender.sendMessage("§cEste sub-item não existe, utilize um dos: §f" + itemCommand.getSubItems());
-                sender.sendMessage("");
-                return true;
-            }
-        }
-
-        String integerStr = null;
-        if (itemCommand.getAttributes() != null && itemCommand.getAttributes().contains("integer")) {
-            if (args.length <= argIndex) {
-                sender.sendMessage(getUsage());
-                sender.sendMessage("");
-                sender.sendMessage("§cVocê precisa especificar o valor do atributo");
-                sender.sendMessage("");
-                return true;
-            }
-
-            integerStr = args[argIndex++];
-            if (!integerStr.matches("\\d+")) {
-                sender.sendMessage("");
-                sender.sendMessage("§cAtributo inválido, deve ser um número inteiro");
-                sender.sendMessage("");
-                return true;
-            }
-        }
-
-        if (args.length <= argIndex) {
+        if (args.length <= 2) {
             sender.sendMessage(getUsage());
-            sender.sendMessage("");
-            sender.sendMessage("§cVocê precisa especificar a quantidade de item");
-            sender.sendMessage("");
-            return true;
+            sender.sendMessage("§cVocê precisa especificar o sub-item para este item");
+            return null;
         }
 
-        int amount;
+        String subItem = args[2];
+        if (!itemCommand.getSubItems().contains(subItem)) {
+            sender.sendMessage(getUsage());
+            sender.sendMessage("§cEste sub-item não existe, utilize um dos: §f" + itemCommand.getSubItems());
+            return null;
+        }
+        return subItem;
+    }
+
+    private String getIntegerAttribute(String[] args, ItemsCommandObject itemCommand, CommandSender sender) {
+        if (itemCommand.getAttributes() == null || !itemCommand.getAttributes().contains("integer")) return null;
+
+        if (args.length <= 3) {
+            sender.sendMessage(getUsage());
+            sender.sendMessage("§cVocê precisa especificar o valor do atributo");
+            return null;
+        }
+
+        String integerStr = args[3];
+        if (!integerStr.matches("\\d+")) {
+            sender.sendMessage("§cAtributo inválido, deve ser um número inteiro");
+            return null;
+        }
+        return integerStr;
+    }
+
+    private int getItemAmount(String[] args, CommandSender sender) {
+        if (args.length <= 4) {
+            sender.sendMessage(getUsage());
+            sender.sendMessage("§cVocê precisa especificar a quantidade de item");
+            return -1;
+        }
+
         try {
-            amount = Integer.parseInt(args[argIndex]);
+            return Integer.parseInt(args[4]);
         } catch (NumberFormatException e) {
             sender.sendMessage("§cQuantidade inválida, coloque um número inteiro");
-            return true;
+            return -1;
         }
+    }
 
+    private boolean giveItemToPlayer(CommandSender sender, String playerName, ItemsCommandObject itemCommand,
+                                     String subItem, String integerStr, int amount) {
         ItemStack item = ItemsCommandObject.createItem(itemCommand, subItem, integerStr);
         if (item == null) {
             sender.sendMessage("§cHouve uma falha ao criar o item.");
-            return true;
+            return false;
         }
 
         item.setAmount(amount);
-
         Player target = Bukkit.getPlayer(playerName);
+
         if (target != null && target.isOnline()) {
             target.getInventory().addItem(item);
-            if (instance.getConfig().getString("messages.received-item") != null
-                    && !instance.getConfig().getString("messages.received-item").isEmpty()) {
-                target.sendMessage(instance.getConfig().getString("messages.received-item")
-                        .replace("&", "§")
-                        .replace("{player}", sender.getName())
-                        .replace("{item}", item.getItemMeta().getDisplayName())
-                        .replace("{amount}", String.valueOf(amount)));
-            }
-
+            sendItemReceivedMessage(target, sender, item, amount);
             if (target != sender) {
-                if (instance.getConfig().getString("messages.gave-item") != null
-                        && !instance.getConfig().getString("messages.gave-item").isEmpty()) {
-                    sender.sendMessage(instance.getConfig().getString("messages.gave-item")
-                            .replace("&", "§")
-                            .replace("{player}", target.getDisplayName())
-                            .replace("{item}", item.getItemMeta().getDisplayName())
-                            .replace("{amount}", String.valueOf(amount)));
-                }
+                sendItemGaveMessage(sender, target, item, amount);
             }
         } else {
             sender.sendMessage("§cEste jogador não está online");
         }
-
         return true;
     }
 
-    private ItemsCommandObject getItemByKey(String itemKey) {
-        for (ItemsCommandObject item : ItemsCommandLoader.getItemsList()) {
-            if (itemKey.equalsIgnoreCase(item.getKey())) {
-                return item;
-            }
+    private void sendItemReceivedMessage(Player target, CommandSender sender, ItemStack item, int amount) {
+        String message = config.getString("messages.received-item");
+        if (message != null && !message.isEmpty()) {
+            target.sendMessage(message.replace("&", "§")
+                    .replace("{player}", sender.getName())
+                    .replace("{item}", item.getItemMeta().getDisplayName())
+                    .replace("{amount}", String.valueOf(amount)));
         }
-        return null;
+    }
+
+    private void sendItemGaveMessage(CommandSender sender, Player target, ItemStack item, int amount) {
+        String message = config.getString("messages.gave-item");
+        if (message != null && !message.isEmpty()) {
+            sender.sendMessage(message.replace("&", "§")
+                    .replace("{player}", target.getDisplayName())
+                    .replace("{item}", item.getItemMeta().getDisplayName())
+                    .replace("{amount}", String.valueOf(amount)));
+        }
     }
 }

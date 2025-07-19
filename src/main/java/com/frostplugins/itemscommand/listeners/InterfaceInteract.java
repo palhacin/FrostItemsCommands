@@ -1,9 +1,9 @@
 package com.frostplugins.itemscommand.listeners;
 
+import com.frostplugins.itemscommand.cache.ItemsCommandCache;
 import com.frostplugins.itemscommand.interfaces.Interface;
-import com.frostplugins.itemscommand.loader.ItemsCommandLoader;
 import com.frostplugins.itemscommand.objects.ItemsCommandObject;
-import com.frostplugins.itemscommand.utils.ItemsCommandUtil;
+import com.frostplugins.itemscommand.services.ItemsCommandService;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -13,68 +13,56 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
 public class InterfaceInteract implements Listener {
-
-    private final Map<UUID, ItemStack> waitingAttributeItem = new HashMap<>();
-    private final Map<UUID, ItemsCommandObject> waitingAttributeObject = new HashMap<>();
-
-    private final Map<UUID, Integer> playerPage = new HashMap<>();
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
+        Player player = (Player) event.getWhoClicked();
+
         if (!event.getView().getTitle().startsWith("§7Gerenciador de Itens Clicaveis")) return;
 
-        Player player = (Player) event.getWhoClicked();
         event.setCancelled(true);
-
         ItemStack clicked = event.getCurrentItem();
+
         if (clicked == null || clicked.getType() == Material.AIR || !clicked.hasItemMeta()) return;
 
-        String display = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
+        String displayName = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
 
-        if (clicked.getType() == Material.ARROW) {
-            if (display.equalsIgnoreCase("← Página anterior")) {
-                int currentPage = playerPage.getOrDefault(player.getUniqueId(), 1);
-                int newPage = Math.max(1, currentPage - 1);
-                playerPage.put(player.getUniqueId(), newPage);
-                player.openInventory(Interface.get(newPage));
-                return;
-            }
+        handlePageNavigation(player, displayName);
 
-            if (display.equalsIgnoreCase("Próxima página →")) {
-                int currentPage = playerPage.getOrDefault(player.getUniqueId(), 1);
-                int newPage = currentPage + 1;
-                playerPage.put(player.getUniqueId(), newPage);
-                player.openInventory(Interface.get(newPage));
-                return;
-            }
+        ItemsCommandObject itemCommand = ItemsCommandService.getItemsCommandByItem(clicked);
+        if (itemCommand != null) {
+            handleItemAttributes(player, clicked, itemCommand);
         }
+    }
 
-        ItemsCommandObject itemCommand = ItemsCommandUtil.getItemsCommandByItem(clicked, ItemsCommandLoader.getItemsList());
-        if (itemCommand == null) return;
+    private void handlePageNavigation(Player player, String displayName) {
+        if (displayName.equalsIgnoreCase("← Página anterior") || displayName.equalsIgnoreCase("Próxima página →")) {
+            int currentPage = ItemsCommandCache.getPlayerPage(player.getUniqueId());
+            int newPage = displayName.equalsIgnoreCase("← Página anterior")
+                    ? Math.max(1, currentPage - 1)
+                    : currentPage + 1;
 
+            ItemsCommandCache.setPlayerPage(player.getUniqueId(), newPage);
+            player.openInventory(Interface.get(newPage));
+        }
+    }
+
+    private void handleItemAttributes(Player player, ItemStack clicked, ItemsCommandObject itemCommand) {
         List<String> attributes = itemCommand.getAttributes();
-        String subItem = ItemsCommandUtil.getCurrentSubItemFromItem(clicked);
-        String attribute = null;
+        String subItem = ItemsCommandService.getCurrentSubItemFromItem(clicked);
 
-        if (attributes != null && attributes.contains("integer")) {
-            Integer attrInt = ItemsCommandUtil.getAttributeFromItem(clicked);
-            if (attrInt != null) attribute = String.valueOf(attrInt);
-        }
-
-        if (attributes != null && attributes.contains("integer")) {
-            waitingAttributeItem.put(player.getUniqueId(), clicked);
-            waitingAttributeObject.put(player.getUniqueId(), itemCommand);
+        if (attributes.contains("integer")) {
+            ItemsCommandCache.setWaitingAttributeItem(player.getUniqueId(), clicked);
+            ItemsCommandCache.setWaitingAttributeObject(player.getUniqueId(), itemCommand);
             player.closeInventory();
             player.sendMessage("§eDigite o valor do atributo (somente números) ou §c'cancelar'§e.");
         } else {
-            ItemStack item = ItemsCommandObject.createItem(itemCommand, subItem, attribute);
-            item.setAmount(clicked.getAmount());
-            player.getInventory().addItem(item);
-            player.sendMessage("§aVocê pegou o item " + item.getItemMeta().getDisplayName());
+            giveItemToPlayer(player, itemCommand, subItem, null, clicked.getAmount());
         }
     }
 
@@ -84,35 +72,40 @@ public class InterfaceInteract implements Listener {
         UUID uuid = player.getUniqueId();
         String message = event.getMessage();
 
-        if (!waitingAttributeItem.containsKey(uuid)) return;
+        if (ItemsCommandCache.getWaitingAttributeItem(uuid) == null) return;
 
         event.setCancelled(true);
 
         if (message.equalsIgnoreCase("cancelar")) {
-            waitingAttributeItem.remove(uuid);
-            waitingAttributeObject.remove(uuid);
-            player.sendMessage("§cOperação cancelada com sucesso.");
-            return;
-        }
-
-        if (!message.matches("\\d+")) {
+            cancelOperation(player);
+        } else if (message.matches("\\d+")) {
+            int attributeValue = Integer.parseInt(message);
+            processAttributeValue(player, attributeValue);
+        } else {
             player.sendMessage("§cValor inválido. Digite apenas números ou 'cancelar'.");
-            return;
         }
-
-        int attributeValue = Integer.parseInt(message);
-
-        ItemStack originalItem = waitingAttributeItem.remove(uuid);
-        ItemsCommandObject itemCommand = waitingAttributeObject.remove(uuid);
-
-        String subItem = ItemsCommandUtil.getCurrentSubItemFromItem(originalItem);
-
-        ItemStack finalItem = ItemsCommandObject.createItem(itemCommand, subItem, String.valueOf(attributeValue));
-
-        finalItem.setAmount(originalItem.getAmount());
-
-        player.getInventory().addItem(finalItem);
-        player.sendMessage("§aVocê pegou o item " + finalItem.getItemMeta().getDisplayName());
     }
 
+    private void cancelOperation(Player player) {
+        ItemsCommandCache.clearPlayerCache(player.getUniqueId());
+        player.sendMessage("§cOperação cancelada com sucesso.");
+    }
+
+    private void processAttributeValue(Player player, int attributeValue) {
+        ItemStack originalItem = ItemsCommandCache.getWaitingAttributeItem(player.getUniqueId());
+        ItemsCommandObject itemCommand = ItemsCommandCache.getWaitingAttributeObject(player.getUniqueId());
+
+        String subItem = ItemsCommandService.getCurrentSubItemFromItem(originalItem);
+
+        giveItemToPlayer(player, itemCommand, subItem, String.valueOf(attributeValue), originalItem.getAmount());
+        ItemsCommandCache.clearPlayerCache(player.getUniqueId());
+    }
+
+    private void giveItemToPlayer(Player player, ItemsCommandObject itemCommand, String subItem, String attribute, int amount) {
+        ItemStack item = ItemsCommandObject.createItem(itemCommand, subItem, attribute);
+        assert item != null;
+        item.setAmount(amount);
+        player.getInventory().addItem(item);
+        player.sendMessage("§aVocê pegou o item " + item.getItemMeta().getDisplayName());
+    }
 }

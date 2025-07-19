@@ -26,13 +26,12 @@ public final class Terminal extends JavaPlugin {
         getLogger().info(" Loaded " + itemsList.size() + " items command");
 
         PluginUtil.registerCommands(
-                new ItemsCommand(this)
+                new ItemsCommand(this.getConfig())
         );
 
-
         PluginUtil.registerListeners(this,
-                ItemInteract.class,
-                InterfaceInteract.class
+                new ItemInteract(),
+                new InterfaceInteract()
         );
 
     }

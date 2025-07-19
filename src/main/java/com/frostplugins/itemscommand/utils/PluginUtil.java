@@ -30,16 +30,10 @@ public class PluginUtil {
         return config;
     }
 
-    public static void registerListeners(JavaPlugin instance, Class<?>... listeners) {
-        Arrays.asList(listeners).forEach(listenerClass -> {
-            try {
-                Listener listener = (Listener) listenerClass.getConstructor().newInstance();
-
-                instance.getServer().getPluginManager().registerEvents(listener, instance);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+    public static void registerListeners(JavaPlugin instance, Listener... listeners) {
+        for (Listener listener : listeners) {
+            Bukkit.getServer().getPluginManager().registerEvents(listener, instance);
+        }
     }
 
     public static void registerCommands(Command... commands) {

@@ -11,45 +11,11 @@ public class ItemsCommandLoader {
     private static List<ItemsCommandObject> itemsList = new ArrayList<>();
 
     public static List<ItemsCommandObject> loadAll(FileConfiguration config) {
-        itemsList.clear();
+        itemsList = new ArrayList<>();
 
         if (config.contains("items")) {
             for (String key : config.getConfigurationSection("items").getKeys(false)) {
-                String path = "items." + key + ".";
-
-                String displayName = config.getString(path + "display-name", "").replace("&", "§");
-
-                List<String> subItems = config.getStringList(path + "sub-items");
-                List<String> attributes = config.getStringList(path + "attributes");
-
-                List<String> description = new ArrayList<>();
-                for (String line : config.getStringList(path + "description")) {
-                    description.add(line.replace("&", "§"));
-                }
-
-                List<String> messageWhenUse = new ArrayList<>();
-                for (String line : config.getStringList(path + "messageWhenUse")) {
-                    messageWhenUse.add(line.replace("&", "§"));
-                }
-
-                String material = config.getString(path + "material");
-                boolean isHead = config.getBoolean(path + "head");
-                String headUrl = config.getString(path + "head-url");
-                List<String> commands = config.getStringList(path + "commands");
-
-                ItemsCommandObject item = new ItemsCommandObject(
-                        key,
-                        displayName,
-                        subItems,
-                        attributes,
-                        description,
-                        messageWhenUse,
-                        material,
-                        isHead,
-                        headUrl,
-                        commands
-                );
-
+                ItemsCommandObject item = loadItem(config, key);
                 itemsList.add(item);
             }
         }
@@ -59,5 +25,31 @@ public class ItemsCommandLoader {
 
     public static List<ItemsCommandObject> getItemsList() {
         return itemsList;
+    }
+
+    private static ItemsCommandObject loadItem(FileConfiguration config, String key) {
+        String path = "items." + key + ".";
+
+        String displayName = getConfigString(config, path + "display-name");
+        List<String> subItems = getConfigStringList(config, path + "sub-items");
+        List<String> attributes = getConfigStringList(config, path + "attributes");
+        List<String> description = getConfigStringList(config, path + "description");
+        List<String> messageWhenUse = getConfigStringList(config, path + "messageWhenUse");
+
+        String material = config.getString(path + "material");
+        boolean isHead = config.getBoolean(path + "head");
+        String headUrl = config.getString(path + "head-url");
+        List<String> commands = getConfigStringList(config, path + "commands");
+
+        return new ItemsCommandObject(key, displayName, subItems, attributes, description, messageWhenUse, material, isHead, headUrl, commands);
+    }
+
+    private static String getConfigString(FileConfiguration config, String path) {
+        return config.getString(path, "").replace("&", "§");
+    }
+
+    private static List<String> getConfigStringList(FileConfiguration config, String path) {
+        List<String> list = config.getStringList(path);
+        return list.isEmpty() ? new ArrayList<>() : new ArrayList<>(list);
     }
 }

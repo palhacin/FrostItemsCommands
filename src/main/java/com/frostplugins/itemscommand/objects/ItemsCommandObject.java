@@ -1,7 +1,7 @@
 package com.frostplugins.itemscommand.objects;
 
 import com.frostplugins.itemscommand.utils.ItemBuilder;
-import com.frostplugins.itemscommand.utils.ItemsCommandUtil;
+import com.frostplugins.itemscommand.services.ItemsCommandService;
 import com.frostplugins.itemscommand.utils.NBTUtil;
 import com.frostplugins.itemscommand.utils.SkullUtils;
 import org.bukkit.Material;
@@ -9,8 +9,12 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ItemsCommandObject {
+
+    private static final String CURRENT_SUB_ITEM_PLACEHOLDER = "{current_sub_item}";
+    private static final String ATTRIBUTES_INTEGER_PLACEHOLDER = "{attributes_integer}";
 
     private final String key;
     private final String displayName;
@@ -37,7 +41,6 @@ public class ItemsCommandObject {
         this.headUrl = headUrl;
         this.commands = commands;
     }
-
 
     public String getKey() {
         return key;
@@ -80,51 +83,61 @@ public class ItemsCommandObject {
     }
 
     public static ItemStack createItem(ItemsCommandObject itemObj, String subItem, String attribute) {
-        ItemStack baseItem;
+        ItemStack baseItem = createBaseItem(itemObj);
 
+        if (baseItem == null) return null;
+
+        String formattedSubItem = ItemsCommandService.formatSubItem(subItem);
+        List<String> replacedLore = buildLore(itemObj, subItem, attribute, formattedSubItem);
+
+        ItemBuilder builder = new ItemBuilder(baseItem)
+                .setName(formatDisplayName(itemObj, subItem, attribute, formattedSubItem))
+                .setAmount(1)
+                .setLore(replacedLore);
+
+        ItemStack item = builder.build();
+        item = NBTUtil.setString(item, "key", itemObj.getKey());
+
+        item = addNBTTagIfPresent(item, "sub_item", subItem);
+        item = addNBTTagIfPresent(item, "attribute", attribute);
+
+        return item;
+    }
+
+    private static ItemStack createBaseItem(ItemsCommandObject itemObj) {
         if (itemObj.isHead()) {
-            baseItem = SkullUtils.getSkull(itemObj.getHeadUrl());
+            return SkullUtils.getSkull(itemObj.getHeadUrl());
         } else {
             Material material = Material.getMaterial(itemObj.getMaterial().toUpperCase());
-            if (material == null) return null;
-            baseItem = new ItemStack(material);
+            return (material == null) ? null : new ItemStack(material);
         }
+    }
 
-        String formattedSubItem = ItemsCommandUtil.formatSubItem(subItem);
-
+    private static List<String> buildLore(ItemsCommandObject itemObj, String subItem, String attribute, String formattedSubItem) {
         List<String> replacedLore = new ArrayList<>();
+
         if (itemObj.getDescription() != null) {
             for (String line : itemObj.getDescription()) {
                 if (line != null) {
                     String replacedLine = line
-                            .replace("{current_sub_item}", subItem != null ? formattedSubItem : "")
-                            .replace("{attributes_integer}", attribute != null ? attribute : "");
+                            .replace(CURRENT_SUB_ITEM_PLACEHOLDER, Optional.ofNullable(subItem).map(s -> formattedSubItem).orElse(""))
+                            .replace(ATTRIBUTES_INTEGER_PLACEHOLDER, Optional.ofNullable(attribute).orElse(""))
+                            .replace("&", "§");
                     replacedLore.add(replacedLine);
                 }
             }
         }
 
-        ItemBuilder builder = new ItemBuilder(baseItem)
-                .setName(itemObj.getDisplayName()
-                        .replace("{current_sub_item}", subItem != null ? formattedSubItem : "")
-                        .replace("{attributes_integer}", attribute != null ? attribute : ""))
-                .setAmount(1)
-                .setLore(replacedLore);
-
-        ItemStack item = builder.build();
-
-        item = NBTUtil.setString(item, "key", itemObj.getKey());
-
-        if (subItem != null && !subItem.isEmpty()) {
-            item = NBTUtil.setString(item, "sub_item", subItem);
-        }
-
-        if (attribute != null && !attribute.isEmpty()) {
-            item = NBTUtil.setString(item, "attribute", attribute);
-        }
-
-        return item;
+        return replacedLore;
     }
 
+    private static String formatDisplayName(ItemsCommandObject itemObj, String subItem, String attribute, String formattedSubItem) {
+        return itemObj.getDisplayName()
+                .replace(CURRENT_SUB_ITEM_PLACEHOLDER, Optional.ofNullable(subItem).map(s -> formattedSubItem).orElse(""))
+                .replace(ATTRIBUTES_INTEGER_PLACEHOLDER, Optional.ofNullable(attribute).orElse(""));
+    }
 
+    private static ItemStack addNBTTagIfPresent(ItemStack item, String tagName, String tagValue) {
+        return (tagValue != null && !tagValue.isEmpty()) ? NBTUtil.setString(item, tagName, tagValue) : item;
+    }
 }

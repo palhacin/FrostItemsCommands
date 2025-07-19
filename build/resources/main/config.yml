@@ -10,6 +10,8 @@ command:
     - 'icmds'
     - 'itemscommand'
   usage: '&cUse /itemscmd <player> <item> (sub-item) (attribute) <amount>'
+  permission: 'frostitemscmds.use'
+  permission-message: '&cVocê não tem permissão para executar este comando'
 
 messages: # empty for no message
   received-item: '&e&lYAYY!  &eVocê recebeu o item {item} &ecom sucesso'
