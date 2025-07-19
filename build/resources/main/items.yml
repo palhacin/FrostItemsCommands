@@ -23,7 +23,7 @@ items:
     material: PAPER
     head: false
     head-url: ''
-    command: 'darvip {player} {selected_sub_item} {attributes_duration}d'
+    command: 'darvip {player} {selected_sub_item} {attributes_integer}d'
   '2':
     display-name: '&fPapel Vip &c(Palhacin 30d)'
     description:
