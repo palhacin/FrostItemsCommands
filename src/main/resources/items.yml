@@ -1,0 +1,40 @@
+###############################
+#      FrostItemsCommand      #
+#       by PalhacinDev_       #
+#   Contact me for support!   #
+###############################
+
+items:
+  '1':
+    display-name: '&fPapel Vip &a({selected_sub_item} {attributes_integer}d)'
+    sub-items:
+      - 'Frost'
+      - 'Plugins'
+    attributes:
+      - 'integer'
+    description:
+      - ''
+      - ' &fVip: &a{current_sub_items}'
+      - ' &fDuração: &a{attributes_integer} dias'
+      - ''
+      - ' &eClique para ativar o vip'
+    message-when-use:
+      - ''
+      - ''
+      - ''
+    material: PAPER
+    head: false
+    head-url: ''
+    command: 'darvip {player} {current_sub_items} {attributes_duration}d'
+  '2':
+    display-name: '&fPapel Vip &c(Palhacin 30d)'
+    description:
+      - ''
+      - ' &fVip: &cPalhacin'
+      - ' &fDuração: &a30 dias'
+      - ''
+      - ' &eClique para ativar o vip'
+    material: PAPER
+    head: true
+    head-url: 'http://textures.minecraft.net/texture/4c9f0e43470c8e853141a971e6e732ef09964b8e4dbe313435e78f910c3049a2'
+    command: 'darvip {player} palhacin 30d'

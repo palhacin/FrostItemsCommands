@@ -1,0 +1,17 @@
+###############################
+#      FrostItemsCommand      #
+#       by PalhacinDev_       #
+#   Contact me for support!   #
+###############################
+
+command:
+  name: 'itemscmd'
+  aliases:
+    - 'icmds'
+    - 'itemscommand'
+  usage: '&cUse /itemscmd <player> <item> (sub-item) (attribute) <amount>'
+
+messages: # empty for no message
+  received-item: '&e&lYAYY!  &eVocê recebeu o item {item} &ecom sucesso'
+  gave-item: '&e&lYAYY!  &eVocê deu {amount}x {item} &epara {player}'
+  used-item: ''

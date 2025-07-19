@@ -1,0 +1,4 @@
+name: FrostItemsCommand
+version: '${version}'
+main: com.frostplugins.itemscommand.Terminal
+author: [PalhacinDev_]
