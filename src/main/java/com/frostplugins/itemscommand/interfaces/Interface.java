@@ -3,7 +3,6 @@ package com.frostplugins.itemscommand.interfaces;
 import com.frostplugins.itemscommand.loader.ItemsCommandLoader;
 import com.frostplugins.itemscommand.objects.ItemsCommandObject;
 import com.frostplugins.itemscommand.utils.ItemBuilder;
-import com.frostplugins.itemscommand.utils.SkullUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
@@ -11,7 +10,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Interface {
 
@@ -25,29 +23,11 @@ public class Interface {
 
             if (hasSubItems) {
                 for (String subItem : itemCommand.getSubItems()) {
-                    String displayName = itemCommand.getDisplayName().replace("{selected_sub_item}", subItem);
-
-                    List<String> lore = new ArrayList<>();
-                    if (itemCommand.getDescription() != null) {
-                        lore = itemCommand.getDescription().stream()
-                                .map(line -> line.replace("{selected_sub_item}", subItem))
-                                .collect(Collectors.toList());
-                    }
-
-                    ItemStack item = createItem(itemCommand, displayName, lore);
+                    ItemStack item = ItemsCommandObject.createItem(itemCommand, subItem, "0");
                     if (item != null) allItems.add(item);
                 }
             } else {
-                String displayName = itemCommand.getDisplayName().replace("{selected_sub_item}", "");
-                List<String> lore = new ArrayList<>();
-                if (itemCommand.getDescription() != null) {
-                    lore = new ArrayList<>(itemCommand.getDescription());
-                    for (int i = 0; i < lore.size(); i++) {
-                        lore.set(i, lore.get(i).replace("{selected_sub_item}", ""));
-                    }
-                }
-
-                ItemStack item = createItem(itemCommand, displayName, lore);
+                ItemStack item = ItemsCommandObject.createItem(itemCommand, null, null);
                 if (item != null) allItems.add(item);
             }
         }
@@ -80,24 +60,5 @@ public class Interface {
         }
 
         return inventory;
-    }
-
-    private static ItemStack createItem(ItemsCommandObject itemCommand, String displayName, List<String> lore) {
-        if (itemCommand.isHead()) {
-            return new ItemBuilder(SkullUtils.getSkull(itemCommand.getHeadUrl()))
-                    .setName(displayName)
-                    .setAmount(1)
-                    .setLore(lore)
-                    .build();
-        } else {
-            Material material = Material.getMaterial(itemCommand.getMaterial().toUpperCase());
-            if (material == null) return null;
-
-            return new ItemBuilder(material)
-                    .setName(displayName)
-                    .setAmount(1)
-                    .setLore(lore)
-                    .build();
-        }
     }
 }

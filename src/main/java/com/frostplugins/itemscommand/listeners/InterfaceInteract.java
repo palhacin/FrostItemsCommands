@@ -57,6 +57,13 @@ public class InterfaceInteract implements Listener {
         if (itemCommand == null) return;
 
         List<String> attributes = itemCommand.getAttributes();
+        String subItem = ItemsCommandUtil.getCurrentSubItemFromItem(clicked);
+        String attribute = null;
+
+        if (attributes != null && attributes.contains("integer")) {
+            Integer attrInt = ItemsCommandUtil.getAttributeFromItem(clicked);
+            if (attrInt != null) attribute = String.valueOf(attrInt);
+        }
 
         if (attributes != null && attributes.contains("integer")) {
             waitingAttributeItem.put(player.getUniqueId(), clicked);
@@ -64,8 +71,10 @@ public class InterfaceInteract implements Listener {
             player.closeInventory();
             player.sendMessage("§eDigite o valor do atributo (somente números) ou §c'cancelar'§e.");
         } else {
-            player.getInventory().addItem(clicked);
-            player.sendMessage("§aVocê pegou o item " + clicked.getItemMeta().getDisplayName());
+            ItemStack item = ItemsCommandObject.createItem(itemCommand, subItem, attribute);
+            item.setAmount(clicked.getAmount());
+            player.getInventory().addItem(item);
+            player.sendMessage("§aVocê pegou o item " + item.getItemMeta().getDisplayName());
         }
     }
 
@@ -92,11 +101,18 @@ public class InterfaceInteract implements Listener {
         }
 
         int attributeValue = Integer.parseInt(message);
-        ItemStack originalItem = waitingAttributeItem.remove(uuid);
 
-        ItemStack finalItem = ItemsCommandUtil.replaceItemAttributes(originalItem, attributeValue);
+        ItemStack originalItem = waitingAttributeItem.remove(uuid);
+        ItemsCommandObject itemCommand = waitingAttributeObject.remove(uuid);
+
+        String subItem = ItemsCommandUtil.getCurrentSubItemFromItem(originalItem);
+
+        ItemStack finalItem = ItemsCommandObject.createItem(itemCommand, subItem, String.valueOf(attributeValue));
+
+        finalItem.setAmount(originalItem.getAmount());
 
         player.getInventory().addItem(finalItem);
         player.sendMessage("§aVocê pegou o item " + finalItem.getItemMeta().getDisplayName());
     }
+
 }

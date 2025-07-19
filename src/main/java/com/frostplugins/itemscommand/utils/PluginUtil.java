@@ -42,16 +42,12 @@ public class PluginUtil {
         });
     }
 
-    public static void registerCommands(Class<?>... commands) {
-        Arrays.asList(commands).forEach(commandClass -> {
-            try {
-                Command command = (Command) commandClass.getConstructor().newInstance();
-                commandMap(getName(), command);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+    public static void registerCommands(Command... commands) {
+        for (Command command : commands) {
+            commandMap(getName(), command);
+        }
     }
+
 
     private static void commandMap(String prefix, Command command) {
         try {

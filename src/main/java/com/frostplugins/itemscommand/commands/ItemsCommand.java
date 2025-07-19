@@ -4,30 +4,28 @@ import com.frostplugins.itemscommand.Terminal;
 import com.frostplugins.itemscommand.interfaces.Interface;
 import com.frostplugins.itemscommand.loader.ItemsCommandLoader;
 import com.frostplugins.itemscommand.objects.ItemsCommandObject;
-import com.frostplugins.itemscommand.utils.ItemBuilder;
-import com.frostplugins.itemscommand.utils.SkullUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ItemsCommand extends Command {
 
-    public ItemsCommand() {
-        super(Terminal.getInstance().getConfig().getString("command.name"));
-        setAliases(Terminal.getInstance().getConfig().getStringList("command.aliases"));
-        setUsage(Terminal.getInstance().getConfig().getString("command.usage").replace("&", "§"));
+    private final Terminal instance;
+
+    public ItemsCommand(Terminal instance) {
+        super(instance.getConfig().getString("command.name"));
+        setAliases(instance.getConfig().getStringList("command.aliases"));
+        setUsage(instance.getConfig().getString("command.usage").replace("&", "§"));
+        this.instance = instance;
     }
+
 
     @Override
     public boolean execute(CommandSender sender, String label, String[] args) {
-        if(sender instanceof Player){
-            if(args.length==0){
+        if (sender instanceof Player) {
+            if (args.length == 0) {
                 ((Player) sender).openInventory(Interface.get(0));
                 return true;
             }
@@ -53,18 +51,15 @@ public class ItemsCommand extends Command {
         if (itemCommand.getSubItems() != null && !itemCommand.getSubItems().isEmpty()) {
             if (args.length <= argIndex) {
                 sender.sendMessage(getUsage());
-
                 sender.sendMessage("");
                 sender.sendMessage("§cVocê precisa especificar o sub-item para este item");
                 sender.sendMessage("");
-
                 return true;
             }
 
             subItem = args[argIndex++];
             if (!itemCommand.getSubItems().contains(subItem)) {
                 sender.sendMessage(getUsage());
-
                 sender.sendMessage("");
                 sender.sendMessage("§cEste sub-item não existe, utilize um dos: §f" + itemCommand.getSubItems());
                 sender.sendMessage("");
@@ -73,10 +68,9 @@ public class ItemsCommand extends Command {
         }
 
         String integerStr = null;
-        if (itemCommand.getAttributes().contains("integer")) {
+        if (itemCommand.getAttributes() != null && itemCommand.getAttributes().contains("integer")) {
             if (args.length <= argIndex) {
                 sender.sendMessage(getUsage());
-
                 sender.sendMessage("");
                 sender.sendMessage("§cVocê precisa especificar o valor do atributo");
                 sender.sendMessage("");
@@ -86,7 +80,7 @@ public class ItemsCommand extends Command {
             integerStr = args[argIndex++];
             if (!integerStr.matches("\\d+")) {
                 sender.sendMessage("");
-                sender.sendMessage("§cAtributo invalido, deve ser um número inteiro");
+                sender.sendMessage("§cAtributo inválido, deve ser um número inteiro");
                 sender.sendMessage("");
                 return true;
             }
@@ -94,7 +88,6 @@ public class ItemsCommand extends Command {
 
         if (args.length <= argIndex) {
             sender.sendMessage(getUsage());
-
             sender.sendMessage("");
             sender.sendMessage("§cVocê precisa especificar a quantidade de item");
             sender.sendMessage("");
@@ -109,66 +102,35 @@ public class ItemsCommand extends Command {
             return true;
         }
 
-        String displayName = itemCommand.getDisplayName();
-        if (subItem != null) {
-            displayName = displayName.replace("{selected_sub_item}", subItem);
-        }
-        if (integerStr != null) {
-            displayName = displayName.replace("{attributes_integer}", integerStr);
-        }
-
-        List<String> formattedLore = new ArrayList<>();
-        for (String line : itemCommand.getDescription()) {
-            if (subItem != null) {
-                line = line.replace("{selected_sub_item}", subItem);
-            }
-            if (integerStr != null) {
-                line = line.replace("{attributes_integer}", integerStr);
-            }
-            formattedLore.add(line);
-        }
-
-        Material material = Material.getMaterial(itemCommand.getMaterial().toUpperCase());
-        if (material == null) {
+        ItemStack item = ItemsCommandObject.createItem(itemCommand, subItem, integerStr);
+        if (item == null) {
+            sender.sendMessage("§cHouve uma falha ao criar o item.");
             return true;
         }
 
-        ItemStack item;
-
-        if(itemCommand.isHead()){
-            item=new ItemBuilder(SkullUtils.getSkull(itemCommand.getHeadUrl()))
-                    .setName(displayName)
-                    .setAmount(amount)
-                    .setLore(formattedLore).build();
-        }else{
-            item=new ItemBuilder(material)
-                    .setName(displayName)
-                    .setAmount(amount)
-                    .setLore(formattedLore).build();
-        }
+        item.setAmount(amount);
 
         Player target = Bukkit.getPlayer(playerName);
         if (target != null && target.isOnline()) {
             target.getInventory().addItem(item);
-            if(Terminal.getInstance().getConfig().getString("messages.received-item") != null
-                    && !Terminal.getInstance().getConfig().getString("messages.received-item").isEmpty()) {
-                target.sendMessage(Terminal.getInstance().getConfig().getString("messages.received-item")
+            if (instance.getConfig().getString("messages.received-item") != null
+                    && !instance.getConfig().getString("messages.received-item").isEmpty()) {
+                target.sendMessage(instance.getConfig().getString("messages.received-item")
                         .replace("&", "§")
                         .replace("{player}", sender.getName())
-                        .replace("{item}", displayName)
+                        .replace("{item}", item.getItemMeta().getDisplayName())
                         .replace("{amount}", String.valueOf(amount)));
             }
 
-            if(target != sender){
-                if(Terminal.getInstance().getConfig().getString("messages.gave-item") != null
-                        && !Terminal.getInstance().getConfig().getString("messages.gave-item").isEmpty()) {
-                    sender.sendMessage(Terminal.getInstance().getConfig().getString("messages.gave-item")
+            if (target != sender) {
+                if (instance.getConfig().getString("messages.gave-item") != null
+                        && !instance.getConfig().getString("messages.gave-item").isEmpty()) {
+                    sender.sendMessage(instance.getConfig().getString("messages.gave-item")
                             .replace("&", "§")
                             .replace("{player}", target.getDisplayName())
-                            .replace("{item}", displayName)
+                            .replace("{item}", item.getItemMeta().getDisplayName())
                             .replace("{amount}", String.valueOf(amount)));
                 }
-
             }
         } else {
             sender.sendMessage("§cEste jogador não está online");

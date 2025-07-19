@@ -9,34 +9,31 @@ import com.frostplugins.itemscommand.utils.ConfigUtil;
 import com.frostplugins.itemscommand.utils.PluginUtil;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public final class Terminal extends JavaPlugin {
 
-    private static Terminal instance;
-
-    public static ConfigUtil itemsConfig;
-
-    public static Terminal getInstance() {
-        return instance;
-    }
+    public ConfigUtil itemsConfig;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
-        instance=this;
         saveDefaultConfig();
-        itemsConfig = PluginUtil.loadConfig("items.yml", Terminal.getInstance());
+        itemsConfig = PluginUtil.loadConfig("items.yml", this);
 
         List<ItemsCommandObject> itemsList = ItemsCommandLoader.loadAll(itemsConfig.getConfig());
 
         getLogger().info(" Loaded " + itemsList.size() + " items command");
 
-        PluginUtil.registerCommands(ItemsCommand.class);
-        PluginUtil.registerListeners(this, ItemInteract.class, InterfaceInteract.class);
+        PluginUtil.registerCommands(
+                new ItemsCommand(this)
+        );
 
+
+        PluginUtil.registerListeners(this,
+                ItemInteract.class,
+                InterfaceInteract.class
+        );
 
     }
 

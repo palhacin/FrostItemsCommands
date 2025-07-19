@@ -6,10 +6,10 @@
 
 items:
   '1':
-    display-name: '&fPapel Vip &a({selected_sub_item} {attributes_integer}d)'
+    display-name: '&fPapel Vip &a({selected_sub_item} {attributes_integer}d&a)'
     sub-items:
-      - 'Frost'
-      - 'Plugins'
+      - 'Frost:&b'
+      - 'Plugins:&c'
     attributes:
       - 'integer'
     description:
