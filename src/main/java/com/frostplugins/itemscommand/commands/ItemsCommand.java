@@ -3,6 +3,7 @@ package com.frostplugins.itemscommand.commands;
 import com.frostplugins.itemscommand.interfaces.Interface;
 import com.frostplugins.itemscommand.objects.ItemsCommandObject;
 import com.frostplugins.itemscommand.services.ItemsCommandService;
+import com.frostplugins.itemscommand.utils.ConfigUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -12,15 +13,17 @@ import org.bukkit.inventory.ItemStack;
 
 public class ItemsCommand extends Command {
 
-    private static FileConfiguration config;;
+    private static FileConfiguration config;
+    private static ConfigUtil itemsConfig;
 
-    public ItemsCommand(FileConfiguration config) {
+    public ItemsCommand(FileConfiguration config, ConfigUtil itemsConfig) {
         super(config.getString("command.name"));
         setAliases(config.getStringList("command.aliases"));
         setUsage(config.getString("command.usage").replace("&", "§"));
         setPermission(config.getString("command.permission"));
         setPermissionMessage(config.getString("command.permission-message").replace("&", "§"));
         ItemsCommand.config = config;
+        ItemsCommand.itemsConfig = itemsConfig;
     }
 
     @Override
@@ -35,6 +38,11 @@ public class ItemsCommand extends Command {
                 ((Player) sender).openInventory(Interface.get(0));
                 return true;
             }
+        }
+
+        if(args.length == 1 && args[0].equalsIgnoreCase("reload")){
+            itemsConfig.reloadConfig();
+            return true;
         }
 
         if (args.length < 2) {
