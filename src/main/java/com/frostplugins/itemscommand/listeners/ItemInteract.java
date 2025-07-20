@@ -22,14 +22,11 @@ public class ItemInteract implements Listener {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInHand();
 
-        player.sendMessage("AAAA");
 
         if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) return;
-        player.sendMessage("22A");
 
         ItemsCommandObject itemCommand = ItemsCommandService.getItemsCommandByItem(item);
         if (itemCommand == null) return;
-        player.sendMessage("32AAA");
 
         String subItem = ItemsCommandService.getCurrentSubItemFromItem(item);
         Integer attribute = ItemsCommandService.getAttributeFromItem(item);
