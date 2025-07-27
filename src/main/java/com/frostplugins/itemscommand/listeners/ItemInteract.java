@@ -22,7 +22,6 @@ public class ItemInteract implements Listener {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInHand();
 
-
         if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) return;
 
         ItemsCommandObject itemCommand = ItemsCommandService.getItemsCommandByItem(item);
@@ -38,9 +37,8 @@ public class ItemInteract implements Listener {
             if (attribute != null) {
                 command = command.replace(ATTRIBUTES_INTEGER_PLACEHOLDER, String.valueOf(attribute));
             }
-            command.replace("{player}", player.getName());
 
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{player}", player.getName()));
         }
 
         updateInventory(player, item);
